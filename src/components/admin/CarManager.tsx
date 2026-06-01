@@ -15,11 +15,19 @@ export default function CarManager({ initialCars }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [availabilityId, setAvailabilityId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [carError, setCarError] = useState<Record<string, string>>({});
+
+  function setError(carId: string, msg: string) {
+    setCarError((prev) => ({ ...prev, [carId]: msg }));
+  }
+  function clearError(carId: string) {
+    setCarError((prev) => { const next = { ...prev }; delete next[carId]; return next; });
+  }
 
   async function handleToggleActive(car: Car) {
     setLoadingId(car.id);
-    setError('');
+    clearError(car.id);
     try {
       const res = await fetch(`/api/cars/${car.id}`, {
         method: 'PATCH',
@@ -30,9 +38,29 @@ export default function CarManager({ initialCars }: Props) {
       const updated: Car = await res.json();
       setCars((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     } catch {
-      setError('Kunne ikke opdatere bil. Prøv igen.');
+      setError(car.id, 'Kunne ikke opdatere bil.');
     } finally {
       setLoadingId(null);
+    }
+  }
+
+  async function handleDelete(car: Car) {
+    if (!confirm(`Er du sikker på, at du vil slette ${car.navn} (${car.regNr})?\n\nDenne handling kan ikke fortrydes.`)) return;
+    setDeletingId(car.id);
+    clearError(car.id);
+    try {
+      const res = await fetch(`/api/cars/${car.id}`, { method: 'DELETE' });
+      if (res.status === 409) {
+        const data = await res.json() as { error: string };
+        setError(car.id, data.error);
+        return;
+      }
+      if (!res.ok) throw new Error();
+      setCars((prev) => prev.filter((c) => c.id !== car.id));
+    } catch {
+      setError(car.id, 'Kunne ikke slette bil. Prøv igen.');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -60,19 +88,17 @@ export default function CarManager({ initialCars }: Props) {
     setAvailabilityId(null);
   }
 
+  const busy = (id: string) => loadingId === id || deletingId === id;
+
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error}</div>
-      )}
-
       <div className="border border-neutral-200 divide-y divide-neutral-100">
         {cars.length === 0 && (
           <div className="p-8 text-center text-neutral-400 text-sm">Ingen biler endnu</div>
         )}
 
         {cars.map((car) => (
-          <div key={car.id}>
+          <div key={car.id} className={!car.aktiv ? 'opacity-50' : undefined}>
             {/* Car row */}
             <div className="p-5 flex items-center justify-between gap-4">
               <div className="min-w-0">
@@ -86,18 +112,23 @@ export default function CarManager({ initialCars }: Props) {
                   </span>
                 </div>
                 <div className="text-xs text-neutral-500 mt-0.5 font-mono">{car.regNr}</div>
+                {carError[car.id] && (
+                  <p className="text-xs text-red-500 mt-1">{carError[car.id]}</p>
+                )}
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={() => toggleEdit(car.id)}
-                  className={`text-xs px-2 py-1 transition-colors ${editingId === car.id ? 'text-black font-medium' : 'text-neutral-500 hover:text-black'}`}
+                  disabled={busy(car.id)}
+                  className={`text-xs px-2 py-1 transition-colors disabled:opacity-40 ${editingId === car.id ? 'text-black font-medium' : 'text-neutral-500 hover:text-black'}`}
                 >
                   Rediger
                 </button>
                 <button
                   onClick={() => toggleAvailability(car.id)}
-                  className={`text-xs px-2 py-1 transition-colors ${availabilityId === car.id ? 'text-black font-medium' : 'text-neutral-500 hover:text-black'}`}
+                  disabled={busy(car.id)}
+                  className={`text-xs px-2 py-1 transition-colors disabled:opacity-40 ${availabilityId === car.id ? 'text-black font-medium' : 'text-neutral-500 hover:text-black'}`}
                 >
                   Tilgængelighed
                   {car.tilgængelighed.length > 0 && (
@@ -106,10 +137,17 @@ export default function CarManager({ initialCars }: Props) {
                 </button>
                 <button
                   onClick={() => handleToggleActive(car)}
-                  disabled={loadingId === car.id}
+                  disabled={busy(car.id)}
                   className="text-xs text-neutral-500 hover:text-black transition-colors px-2 py-1 disabled:opacity-40"
                 >
                   {loadingId === car.id ? '…' : car.aktiv ? 'Deaktiver' : 'Aktiver'}
+                </button>
+                <button
+                  onClick={() => handleDelete(car)}
+                  disabled={busy(car.id)}
+                  className="text-xs text-neutral-400 hover:text-red-600 transition-colors px-2 py-1 disabled:opacity-40"
+                >
+                  {deletingId === car.id ? '…' : 'Slet'}
                 </button>
               </div>
             </div>
@@ -130,10 +168,7 @@ export default function CarManager({ initialCars }: Props) {
                   <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">
                     Åbne vinduer — {car.navn}
                   </p>
-                  <AvailabilityManager
-                    car={car}
-                    onUpdated={handleAvailabilityUpdated}
-                  />
+                  <AvailabilityManager car={car} onUpdated={handleAvailabilityUpdated} />
                 </div>
               </div>
             )}

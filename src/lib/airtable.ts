@@ -156,3 +156,18 @@ export async function updateBookingStatus(
   const record = await getBase()(BOOKINGER()).update(id, { Status: status });
   return mapBooking(record);
 }
+
+export async function carHasBookings(carId: string): Promise<boolean> {
+  // Fetch first page only — we just need to know if any exist
+  const page = await getBase()(BOOKINGER())
+    .select({ fields: ['Bil'], maxRecords: 100 })
+    .firstPage();
+  return page.some((r) => {
+    const links = r.get('Bil') as string[] | undefined;
+    return links?.[0] === carId;
+  });
+}
+
+export async function deleteCar(id: string): Promise<void> {
+  await getBase()(BILER()).destroy(id);
+}

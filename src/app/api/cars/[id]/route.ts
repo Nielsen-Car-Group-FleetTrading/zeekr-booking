@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateCar } from '@/lib/airtable';
+import { updateCar, carHasBookings, deleteCar } from '@/lib/airtable';
 import type { AvailabilityWindow } from '@/types';
 import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
@@ -10,8 +10,7 @@ function isAdmin(): boolean {
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminPassword) return false;
   const expected = createHash('sha256').update(adminPassword).digest('hex');
-  const auth = cookies().get('admin_auth');
-  return auth?.value === expected;
+  return cookies().get('admin_auth')?.value === expected;
 }
 
 export async function PATCH(
@@ -43,5 +42,30 @@ export async function PATCH(
   } catch (err) {
     console.error('PATCH /api/cars/[id] error:', err);
     return NextResponse.json({ error: 'Kunne ikke opdatere bil' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: { id: string } }
+) {
+  if (!isAdmin()) {
+    return NextResponse.json({ error: 'Ikke autoriseret' }, { status: 401 });
+  }
+
+  try {
+    const hasBookings = await carHasBookings(params.id);
+    if (hasBookings) {
+      return NextResponse.json(
+        { error: 'Bilen har tilknyttede bookinger og kan ikke slettes. Deaktivér den i stedet for at skjule den fra kunderne.' },
+        { status: 409 }
+      );
+    }
+
+    await deleteCar(params.id);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('DELETE /api/cars/[id] error:', err);
+    return NextResponse.json({ error: 'Kunne ikke slette bil' }, { status: 500 });
   }
 }
