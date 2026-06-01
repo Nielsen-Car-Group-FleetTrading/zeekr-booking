@@ -3,8 +3,6 @@ import { formatInTimeZone } from 'date-fns-tz';
 import type { Car, Booking } from '@/types';
 import { config } from './config';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function formatDanishDate(isoString: string): string {
   return formatInTimeZone(new Date(isoString), config.timezone, "EEEE 'd.' d. MMMM yyyy", {
     locale: undefined,
@@ -112,6 +110,7 @@ function buildEmailHtml(booking: Booking, car: Car): string {
 }
 
 export async function sendBookingConfirmation(booking: Booking, car: Car): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const dateStr = formatDanishDate(booking.start);
   const startTime = formatTime(booking.start);
 
