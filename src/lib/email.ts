@@ -14,8 +14,8 @@ function formatTime(isoString: string): string {
 }
 
 function buildEmailHtml(booking: Booking, car: Car): string {
-  const bnLogoUrl = `${config.appUrl}/bjarne-nielsen-logo.png`;
-  const zeekrLogoUrl = `${config.appUrl}/zeekr-logo.png`;
+  const bnLogoUrl = `${config.appUrl}/BN_en_del_af_NCG_Logo_2F_POS-removebg-preview.png`;
+  const zeekrLogoUrl = `${config.appUrl}/Zeekr-logo.jpg`;
   const dateStr = formatDanishDate(booking.start);
   const startTime = formatTime(booking.start);
   const endTime = formatTime(booking.slut);
