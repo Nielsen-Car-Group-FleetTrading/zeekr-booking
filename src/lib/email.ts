@@ -1,11 +1,12 @@
 import { Resend } from 'resend';
 import { formatInTimeZone } from 'date-fns-tz';
+import { da } from 'date-fns/locale';
 import type { Car, Booking } from '@/types';
 import { config } from './config';
 
 function formatDanishDate(isoString: string): string {
   return formatInTimeZone(new Date(isoString), config.timezone, "EEEE 'd.' d. MMMM yyyy", {
-    locale: undefined,
+    locale: da,
   });
 }
 
