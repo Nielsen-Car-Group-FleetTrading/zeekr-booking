@@ -54,10 +54,12 @@ export async function POST(request: Request) {
       booking.bilNavn = car.navn;
       booking.bilRegNr = car.regNr;
 
-      // Send confirmation email (non-blocking — don't fail the booking if email fails)
-      sendBookingConfirmation(booking, car).catch((err) => {
+      // Await email so it completes before the serverless function exits
+      try {
+        await sendBookingConfirmation(booking, car);
+      } catch (err) {
         console.error('Failed to send confirmation email:', err);
-      });
+      }
     }
 
     return NextResponse.json(booking, { status: 201 });
