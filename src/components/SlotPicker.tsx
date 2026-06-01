@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { TimeSlot } from '@/types';
+import type { Car, TimeSlot } from '@/types';
 
 interface Props {
-  carId: string;
+  car: Car;
   date: string;
   onSelect: (slot: TimeSlot) => void;
 }
 
-export default function SlotPicker({ carId, date, onSelect }: Props) {
+export default function SlotPicker({ car, date, onSelect }: Props) {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,7 +20,7 @@ export default function SlotPicker({ carId, date, onSelect }: Props) {
     setError('');
     setSelected(null);
 
-    fetch(`/api/availability?carId=${encodeURIComponent(carId)}&date=${date}`)
+    fetch(`/api/availability?carId=${encodeURIComponent(car.id)}&date=${date}`)
       .then((r) => {
         if (!r.ok) throw new Error();
         return r.json() as Promise<TimeSlot[]>;
@@ -28,7 +28,7 @@ export default function SlotPicker({ carId, date, onSelect }: Props) {
       .then((data) => setSlots(data))
       .catch(() => setError('Kunne ikke hente ledige tider. Prøv igen.'))
       .finally(() => setLoading(false));
-  }, [carId, date]);
+  }, [car.id, date]);
 
   function handleSelect(slot: TimeSlot) {
     if (!slot.available) return;
@@ -38,7 +38,6 @@ export default function SlotPicker({ carId, date, onSelect }: Props) {
 
   const availableCount = slots.filter((s) => s.available).length;
 
-  // Format date label
   const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('da-DK', {
     weekday: 'long',
     day: 'numeric',
@@ -47,15 +46,20 @@ export default function SlotPicker({ carId, date, onSelect }: Props) {
 
   return (
     <div>
-      <div className="text-sm text-neutral-500 mb-5">
-        Ledige tider{' '}
-        <span className="text-black font-medium capitalize">{dateLabel}</span>:
+      {/* Header: bil + dato */}
+      <div className="border border-neutral-200 px-4 py-3 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <div>
+          <span className="font-semibold text-sm">{car.navn}</span>
+          {car.model && <span className="text-neutral-400 text-sm"> {car.model}</span>}
+          <span className="text-xs text-neutral-400 font-mono ml-2">{car.regNr}</span>
+        </div>
+        <span className="text-sm text-neutral-500 capitalize">{dateLabel}</span>
       </div>
 
       {loading && (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-12 bg-neutral-100 animate-pulse" />
+            <div key={i} className="h-14 bg-neutral-100 animate-pulse" />
           ))}
         </div>
       )}
@@ -78,20 +82,37 @@ export default function SlotPicker({ carId, date, onSelect }: Props) {
                 key={slot.start}
                 onClick={() => handleSelect(slot)}
                 disabled={!slot.available}
-                className={`h-12 text-sm font-medium border transition-colors ${
+                className={`h-14 flex flex-col items-center justify-center text-xs font-medium border transition-colors ${
                   !slot.available
-                    ? 'border-neutral-100 bg-neutral-50 text-neutral-300 cursor-not-allowed line-through'
+                    ? 'border-neutral-100 bg-neutral-50 text-neutral-300 cursor-not-allowed'
                     : selected === slot.start
                     ? 'border-2 border-black bg-black text-white'
-                    : 'border-neutral-200 text-neutral-700 hover:border-neutral-400'
+                    : 'border-neutral-200 text-neutral-700 hover:border-neutral-500'
                 }`}
               >
-                {slot.label.split('–')[0].trim()}
+                <span className={`font-semibold ${!slot.available ? 'text-neutral-300' : selected === slot.start ? 'text-white' : 'text-neutral-900'}`}>
+                  {slot.label.split('–')[0].trim()}
+                </span>
+                <span className={`text-[10px] mt-0.5 ${!slot.available ? 'text-neutral-200' : selected === slot.start ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                  – {slot.label.split('–')[1]?.trim()}
+                </span>
               </button>
             ))}
           </div>
+
+          <div className="flex items-center gap-4 mt-4 text-xs text-neutral-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 border border-neutral-200 bg-white inline-block" />
+              Ledig ({availableCount})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 bg-neutral-100 inline-block" />
+              Optaget ({slots.length - availableCount})
+            </span>
+          </div>
+
           {availableCount === 0 && (
-            <p className="text-sm text-neutral-400 mt-4 text-center">
+            <p className="text-sm text-neutral-400 mt-3 text-center">
               Alle tider er optaget denne dag. Vælg en anden dato.
             </p>
           )}

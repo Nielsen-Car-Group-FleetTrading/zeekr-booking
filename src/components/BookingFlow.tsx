@@ -131,7 +131,7 @@ export default function BookingFlow({ initialCars }: Props) {
         <div>
           <BackButton onClick={() => setStep('date')} />
           <SlotPicker
-            carId={selectedCar.id}
+            car={selectedCar}
             date={selectedDate}
             onSelect={handleSelectSlot}
           />
