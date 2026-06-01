@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateCar, carHasBookings, deleteCar } from '@/lib/airtable';
+import { updateCar, countConfirmedBookingsForCar, deleteCar } from '@/lib/airtable';
 import type { AvailabilityWindow } from '@/types';
 import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
@@ -54,10 +54,12 @@ export async function DELETE(
   }
 
   try {
-    const hasBookings = await carHasBookings(params.id);
-    if (hasBookings) {
+    const confirmedCount = await countConfirmedBookingsForCar(params.id);
+    if (confirmedCount > 0) {
       return NextResponse.json(
-        { error: 'Bilen har tilknyttede bookinger og kan ikke slettes. Deaktivér den i stedet for at skjule den fra kunderne.' },
+        {
+          error: `Bilen har ${confirmedCount} bekræftet${confirmedCount === 1 ? '' : 'e'} booking${confirmedCount === 1 ? '' : 'er'} og kan ikke slettes. Deaktivér den i stedet for at skjule den fra kunderne.`,
+        },
         { status: 409 }
       );
     }

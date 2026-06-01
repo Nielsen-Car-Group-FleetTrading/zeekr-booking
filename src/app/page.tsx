@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import { getCars } from '@/lib/airtable';
 import BookingFlow from '@/components/BookingFlow';
+import HeaderLogos from '@/components/HeaderLogos';
 import type { Car } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -15,14 +15,12 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <header className="border-b border-neutral-200 px-6 py-4">
         <div className="max-w-2xl mx-auto">
-          <Image src="/zeekr-logo.svg" alt="Zeekr" width={120} height={30} priority unoptimized />
+          <HeaderLogos />
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 px-4 py-10">
         <div className="max-w-2xl mx-auto">
           <div className="mb-10">
@@ -33,7 +31,6 @@ export default async function Home() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-neutral-200 px-6 py-6 mt-10">
         <div className="max-w-2xl mx-auto text-xs text-neutral-400">
           © {new Date().getFullYear()} Zeekr Danmark

@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import { getCars, getAllBookings } from '@/lib/airtable';
 import AdminTabs from '@/components/admin/AdminTabs';
 import LogoutButton from '@/components/admin/LogoutButton';
+import HeaderLogos from '@/components/HeaderLogos';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export default async function AdminPage() {
       <header className="border-b border-neutral-200 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Image src="/zeekr-logo.svg" alt="Zeekr" width={108} height={28} unoptimized />
+            <HeaderLogos size="sm" />
             <span className="text-sm text-neutral-400 border-l border-neutral-200 pl-4">Admin</span>
           </div>
           <LogoutButton />

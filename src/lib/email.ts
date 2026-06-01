@@ -14,7 +14,8 @@ function formatTime(isoString: string): string {
 }
 
 function buildEmailHtml(booking: Booking, car: Car): string {
-  const logoUrl = `${config.appUrl}/zeekr-logo.svg`;
+  const bnLogoUrl = `${config.appUrl}/bjarne-nielsen-logo.png`;
+  const zeekrLogoUrl = `${config.appUrl}/zeekr-logo.png`;
   const dateStr = formatDanishDate(booking.start);
   const startTime = formatTime(booking.start);
   const endTime = formatTime(booking.slut);
@@ -34,8 +35,20 @@ function buildEmailHtml(booking: Booking, car: Car): string {
 
           <!-- Header -->
           <tr>
-            <td style="background:#000000;padding:32px 40px;">
-              <img src="${logoUrl}" alt="Zeekr" height="28" style="display:block;" />
+            <td style="background:#000000;padding:24px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td valign="middle">
+                    <img src="${bnLogoUrl}" alt="Bjarne Nielsen" height="30" style="display:block;max-width:180px;" />
+                  </td>
+                  <td width="1" style="background:rgba(255,255,255,0.25);padding:0 20px;">
+                    <div style="width:1px;height:28px;background:rgba(255,255,255,0.25);"></div>
+                  </td>
+                  <td valign="middle" align="right">
+                    <img src="${zeekrLogoUrl}" alt="Zeekr" height="24" style="display:block;margin-left:auto;max-width:100px;" />
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 

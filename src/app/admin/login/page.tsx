@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import Image from 'next/image';
+import HeaderLogos from '@/components/HeaderLogos';
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
@@ -36,10 +36,12 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-neutral-50">
       <div className="w-full max-w-sm">
-        <div className="mb-10 text-center">
-          <Image src="/zeekr-logo.svg" alt="Zeekr" width={120} height={30} className="mx-auto mb-6" unoptimized />
-          <h1 className="text-xl font-bold tracking-tight">Admin</h1>
-          <p className="text-sm text-neutral-500 mt-1">Indtast adgangskode for at fortsætte</p>
+        <div className="mb-10 flex flex-col items-center">
+          <HeaderLogos />
+          <div className="mt-8 text-center">
+            <h1 className="text-xl font-bold tracking-tight">Admin</h1>
+            <p className="text-sm text-neutral-500 mt-1">Indtast adgangskode for at fortsætte</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
