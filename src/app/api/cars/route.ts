@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Navn og reg.nr er påkrævet' }, { status: 400 });
     }
 
-    const car = await createCar({ navn: navn.trim(), regNr: regNr.trim(), model: model?.trim(), aktiv: true });
+    const car = await createCar({ navn: navn.trim(), regNr: regNr.trim(), model: model?.trim(), aktiv: true, tilgængelighed: [] });
     return NextResponse.json(car, { status: 201 });
   } catch (err) {
     console.error('POST /api/cars error:', err);

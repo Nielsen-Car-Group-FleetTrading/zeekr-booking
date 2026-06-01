@@ -1,9 +1,16 @@
+export interface AvailabilityWindow {
+  date: string;  // YYYY-MM-DD
+  start: string; // HH:mm (Europe/Copenhagen)
+  end: string;   // HH:mm
+}
+
 export interface Car {
   id: string;
   navn: string;
   regNr: string;
   model?: string;
   aktiv: boolean;
+  tilgængelighed: AvailabilityWindow[];
 }
 
 export interface Booking {

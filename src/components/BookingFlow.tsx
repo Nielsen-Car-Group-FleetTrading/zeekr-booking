@@ -120,7 +120,10 @@ export default function BookingFlow({ initialCars }: Props) {
             Bil: <span className="text-black font-medium">{selectedCar.navn}</span>
             {selectedCar.model && <span className="text-neutral-400"> {selectedCar.model}</span>}
           </div>
-          <DatePicker onSelect={handleSelectDate} />
+          <DatePicker
+            availableDates={Array.from(new Set(selectedCar.tilgængelighed.map((w) => w.date))).sort()}
+            onSelect={handleSelectDate}
+          />
         </div>
       )}
 

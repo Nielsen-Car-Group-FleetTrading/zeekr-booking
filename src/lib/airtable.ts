@@ -1,5 +1,5 @@
 import Airtable from 'airtable';
-import type { Car, Booking, CreateBookingInput } from '@/types';
+import type { Car, Booking, CreateBookingInput, AvailabilityWindow } from '@/types';
 
 const getBase = () =>
   new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
@@ -9,6 +9,23 @@ const getBase = () =>
 const BILER = () => process.env.AIRTABLE_BILER_TABLE ?? 'Biler';
 const BOOKINGER = () => process.env.AIRTABLE_BOOKINGER_TABLE ?? 'Bookinger';
 
+function parseAvailability(raw: unknown): AvailabilityWindow[] {
+  if (!raw || typeof raw !== 'string') return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (w): w is AvailabilityWindow =>
+        typeof w === 'object' && w !== null &&
+        typeof (w as AvailabilityWindow).date === 'string' &&
+        typeof (w as AvailabilityWindow).start === 'string' &&
+        typeof (w as AvailabilityWindow).end === 'string'
+    );
+  } catch {
+    return [];
+  }
+}
+
 function mapCar(r: Airtable.Record<Airtable.FieldSet>): Car {
   return {
     id: r.id,
@@ -16,6 +33,7 @@ function mapCar(r: Airtable.Record<Airtable.FieldSet>): Car {
     regNr: (r.get('Reg.nr') as string) ?? '',
     model: (r.get('Model') as string | undefined) ?? undefined,
     aktiv: (r.get('Aktiv') as boolean) ?? false,
+    tilgængelighed: parseAvailability(r.get('Tilgængelighed')),
   };
 }
 
@@ -60,6 +78,7 @@ export async function createCar(data: Omit<Car, 'id'>): Promise<Car> {
     'Reg.nr': data.regNr,
     Model: data.model ?? '',
     Aktiv: data.aktiv,
+    Tilgængelighed: JSON.stringify(data.tilgængelighed ?? []),
   });
   return mapCar(record);
 }
@@ -70,12 +89,14 @@ export async function updateCar(id: string, data: Partial<Omit<Car, 'id'>>): Pro
   if (data.regNr !== undefined) fields['Reg.nr'] = data.regNr;
   if (data.model !== undefined) fields['Model'] = data.model;
   if (data.aktiv !== undefined) fields['Aktiv'] = data.aktiv;
+  if (data.tilgængelighed !== undefined) {
+    fields['Tilgængelighed'] = JSON.stringify(data.tilgængelighed);
+  }
   const record = await getBase()(BILER()).update(id, fields);
   return mapCar(record);
 }
 
 export async function getBookingsForCar(carId: string, fromDate: Date): Promise<Booking[]> {
-  // Fetch confirmed bookings ending after fromDate, filter by carId in JS
   const fromStr = new Date(fromDate.getTime() - 24 * 60 * 60 * 1000).toISOString();
   const formula = `AND({Status} = 'Bekræftet', IS_AFTER({Slut}, '${fromStr}'))`;
 
@@ -124,11 +145,7 @@ export async function getAllBookings(): Promise<Booking[]> {
   return records.map((r) => {
     const booking = mapBooking(r);
     const car = carMap.get(booking.bilId);
-    return {
-      ...booking,
-      bilNavn: car?.navn,
-      bilRegNr: car?.regNr,
-    };
+    return { ...booking, bilNavn: car?.navn, bilRegNr: car?.regNr };
   });
 }
 

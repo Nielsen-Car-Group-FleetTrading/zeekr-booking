@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getBookingsForCar } from '@/lib/airtable';
-import { generateSlots, filterAvailableSlots, isBusinessDay } from '@/lib/availability';
+import { getCar, getBookingsForCar } from '@/lib/airtable';
+import { generateSlots, filterAvailableSlots } from '@/lib/availability';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,12 +17,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'date skal være YYYY-MM-DD' }, { status: 400 });
   }
 
-  if (!isBusinessDay(date)) {
-    return NextResponse.json([]);
-  }
-
   try {
-    const slots = generateSlots(date);
+    const car = await getCar(carId);
+    if (!car) {
+      return NextResponse.json({ error: 'Bil ikke fundet' }, { status: 404 });
+    }
+
+    // Find the specific window for this date
+    const window = car.tilgængelighed.find((w) => w.date === date);
+    if (!window) {
+      return NextResponse.json([]);
+    }
+
+    const slots = generateSlots(date, window.start, window.end);
     const bookings = await getBookingsForCar(carId, new Date(date + 'T00:00:00Z'));
     const available = filterAvailableSlots(slots, bookings);
     return NextResponse.json(available);

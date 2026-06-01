@@ -2,14 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
-import { addDays, startOfDay } from 'date-fns';
-import { isBusinessDay } from '@/lib/availability';
+import { fromZonedTime } from 'date-fns-tz';
 
 interface Props {
+  availableDates: string[]; // YYYY-MM-DD, sorted ascending
   onSelect: (date: string) => void;
 }
 
-const DAYS_AHEAD = 30;
 const TZ = process.env.NEXT_PUBLIC_TIMEZONE ?? 'Europe/Copenhagen';
 
 const DAY_NAMES = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
@@ -18,37 +17,38 @@ const MONTH_NAMES = [
   'juli', 'august', 'september', 'oktober', 'november', 'december',
 ];
 
-export default function DatePicker({ onSelect }: Props) {
+interface DateEntry {
+  dateStr: string;
+  dayName: string;
+  day: number;
+  monthName: string;
+  isToday: boolean;
+}
+
+export default function DatePicker({ availableDates, onSelect }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
 
-  const dates = useMemo(() => {
-    const result: { dateStr: string; dayName: string; day: number; monthName: string; isToday: boolean }[] = [];
-    const today = startOfDay(new Date());
+  const todayStr = formatInTimeZone(new Date(), TZ, 'yyyy-MM-dd');
 
-    for (let i = 0; i < DAYS_AHEAD; i++) {
-      const d = addDays(today, i);
-      const dateStr = formatInTimeZone(d, TZ, 'yyyy-MM-dd');
-      if (!isBusinessDay(dateStr)) continue;
-
-      const dow = parseInt(formatInTimeZone(d, TZ, 'i'), 10) - 1; // 0=Mon
-      const day = parseInt(formatInTimeZone(d, TZ, 'd'), 10);
-      const month = parseInt(formatInTimeZone(d, TZ, 'M'), 10) - 1;
-
-      result.push({
+  const dates = useMemo((): DateEntry[] => {
+    return availableDates.map((dateStr) => {
+      const utc = fromZonedTime(`${dateStr}T12:00:00`, TZ);
+      const dow = parseInt(formatInTimeZone(utc, TZ, 'i'), 10) - 1; // 0=Mon
+      const day = parseInt(formatInTimeZone(utc, TZ, 'd'), 10);
+      const month = parseInt(formatInTimeZone(utc, TZ, 'M'), 10) - 1;
+      return {
         dateStr,
         dayName: DAY_NAMES[dow],
         day,
         monthName: MONTH_NAMES[month],
-        isToday: i === 0,
-      });
-    }
-
-    return result;
-  }, []);
+        isToday: dateStr === todayStr,
+      };
+    });
+  }, [availableDates, todayStr]);
 
   // Group by month
   const byMonth = useMemo(() => {
-    const groups: { monthLabel: string; dates: typeof dates }[] = [];
+    const groups: { monthLabel: string; dates: DateEntry[] }[] = [];
     for (const d of dates) {
       const label = d.monthName.charAt(0).toUpperCase() + d.monthName.slice(1);
       const last = groups[groups.length - 1];
@@ -64,6 +64,14 @@ export default function DatePicker({ onSelect }: Props) {
   function handleSelect(dateStr: string) {
     setSelected(dateStr);
     onSelect(dateStr);
+  }
+
+  if (availableDates.length === 0) {
+    return (
+      <div className="border border-neutral-200 p-8 text-center text-neutral-400 text-sm">
+        Ingen tilgængelige datoer for denne bil. Kontakt os for at aftale en tid.
+      </div>
+    );
   }
 
   return (
@@ -89,11 +97,7 @@ export default function DatePicker({ onSelect }: Props) {
                   <span className="text-xs mb-1 opacity-70">{d.dayName}</span>
                   <span className="text-lg font-semibold leading-none">{d.day}</span>
                   {d.isToday && (
-                    <span
-                      className={`text-[10px] mt-1 ${
-                        selected === d.dateStr ? 'text-neutral-300' : 'text-neutral-400'
-                      }`}
-                    >
+                    <span className={`text-[10px] mt-1 ${selected === d.dateStr ? 'text-neutral-300' : 'text-neutral-400'}`}>
                       i dag
                     </span>
                   )}
