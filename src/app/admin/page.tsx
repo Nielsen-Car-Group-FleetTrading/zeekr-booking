@@ -14,7 +14,7 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-neutral-200 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <HeaderLogos size="sm" />
             <span className="text-sm text-neutral-400 border-l border-neutral-200 pl-4">Admin</span>
@@ -24,7 +24,7 @@ export default async function AdminPage() {
       </header>
 
       <main className="flex-1 px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-[1440px] mx-auto">
           <AdminTabs cars={cars} bookings={bookings} />
         </div>
       </main>
