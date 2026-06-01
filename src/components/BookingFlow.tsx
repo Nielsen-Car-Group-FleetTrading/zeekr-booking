@@ -1,51 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Car, TimeSlot, Booking } from '@/types';
-import CarSelector from './CarSelector';
 import DatePicker from './DatePicker';
-import SlotPicker from './SlotPicker';
+import DayOverview from './DayOverview';
 import BookingForm from './BookingForm';
 import BookingConfirmation from './BookingConfirmation';
 
-type Step = 'car' | 'date' | 'slots' | 'form' | 'confirmation';
+type Step = 'date' | 'overview' | 'form' | 'confirmation';
 
 interface Props {
   initialCars: Car[];
 }
 
 const STEP_LABELS: Record<Step, string> = {
-  car: 'Vælg bil',
   date: 'Vælg dato',
-  slots: 'Vælg tid',
+  overview: 'Vælg tid',
   form: 'Dine oplysninger',
   confirmation: 'Bekræftet',
 };
 
-const STEPS: Step[] = ['car', 'date', 'slots', 'form', 'confirmation'];
-const VISIBLE_STEPS: Step[] = ['car', 'date', 'slots', 'form'];
+const VISIBLE_STEPS: Step[] = ['date', 'overview', 'form'];
 
 export default function BookingFlow({ initialCars }: Props) {
-  const [step, setStep] = useState<Step>('car');
-  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [step, setStep] = useState<Step>('date');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
 
-  function handleSelectCar(car: Car) {
-    setSelectedCar(car);
-    setSelectedDate(null);
-    setSelectedSlot(null);
-    setStep('date');
-  }
+  // Union of all cars' available dates, today or later
+  const availableDates = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('sv'); // YYYY-MM-DD in local time
+    return Array.from(
+      new Set(initialCars.flatMap((c) => c.tilgængelighed.map((w) => w.date)))
+    )
+      .filter((d) => d >= todayStr)
+      .sort();
+  }, [initialCars]);
+
+  // Cars that have a window on the selected date
+  const carsForDate = useMemo(
+    () =>
+      selectedDate
+        ? initialCars.filter((c) => c.tilgængelighed.some((w) => w.date === selectedDate))
+        : [],
+    [initialCars, selectedDate]
+  );
 
   function handleSelectDate(date: string) {
     setSelectedDate(date);
+    setSelectedCar(null);
     setSelectedSlot(null);
-    setStep('slots');
+    setStep('overview');
   }
 
-  function handleSelectSlot(slot: TimeSlot) {
+  function handleSelectSlot(car: Car, slot: TimeSlot) {
+    setSelectedCar(car);
     setSelectedSlot(slot);
     setStep('form');
   }
@@ -56,19 +67,19 @@ export default function BookingFlow({ initialCars }: Props) {
   }
 
   function handleReset() {
-    setStep('car');
-    setSelectedCar(null);
+    setStep('date');
     setSelectedDate(null);
+    setSelectedCar(null);
     setSelectedSlot(null);
     setConfirmedBooking(null);
   }
 
   const currentStepIndex = VISIBLE_STEPS.indexOf(step);
 
-  if (initialCars.length === 0 && step === 'car') {
+  if (availableDates.length === 0) {
     return (
       <div className="border border-neutral-200 p-8 text-center text-neutral-400 text-sm">
-        Ingen biler er tilgængelige i øjeblikket. Prøv igen senere.
+        Ingen tider er tilgængelige i øjeblikket. Kontakt os for at aftale en tid.
       </div>
     );
   }
@@ -77,7 +88,7 @@ export default function BookingFlow({ initialCars }: Props) {
     <div>
       {/* Step indicator */}
       {step !== 'confirmation' && (
-        <div className="flex items-center gap-0 mb-10 overflow-x-auto pb-1">
+        <div className="flex items-center mb-10 overflow-x-auto pb-1">
           {VISIBLE_STEPS.map((s, i) => (
             <div key={s} className="flex items-center shrink-0">
               <div className="flex items-center gap-2">
@@ -108,39 +119,34 @@ export default function BookingFlow({ initialCars }: Props) {
         </div>
       )}
 
-      {/* Step content */}
-      {step === 'car' && (
-        <CarSelector cars={initialCars} onSelect={handleSelectCar} />
+      {/* Step: choose date */}
+      {step === 'date' && (
+        <DatePicker availableDates={availableDates} onSelect={handleSelectDate} />
       )}
 
-      {step === 'date' && selectedCar && (
-        <div>
-          <BackButton onClick={() => setStep('car')} />
-          <div className="mt-4 mb-2 text-sm text-neutral-500">
-            Bil: <span className="text-black font-medium">{selectedCar.navn}</span>
-            {selectedCar.model && <span className="text-neutral-400"> {selectedCar.model}</span>}
-          </div>
-          <DatePicker
-            availableDates={Array.from(new Set(selectedCar.tilgængelighed.map((w) => w.date))).sort()}
-            onSelect={handleSelectDate}
-          />
-        </div>
-      )}
-
-      {step === 'slots' && selectedCar && selectedDate && (
+      {/* Step: pick slot across all cars */}
+      {step === 'overview' && selectedDate && (
         <div>
           <BackButton onClick={() => setStep('date')} />
-          <SlotPicker
-            car={selectedCar}
+          <div className="text-sm text-neutral-500 capitalize mb-5">
+            {new Date(selectedDate + 'T12:00:00').toLocaleDateString('da-DK', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </div>
+          <DayOverview
+            cars={carsForDate}
             date={selectedDate}
             onSelect={handleSelectSlot}
           />
         </div>
       )}
 
-      {step === 'form' && selectedCar && selectedDate && selectedSlot && (
+      {/* Step: fill in details */}
+      {step === 'form' && selectedCar && selectedSlot && (
         <div>
-          <BackButton onClick={() => setStep('slots')} />
+          <BackButton onClick={() => setStep('overview')} />
           <BookingForm
             car={selectedCar}
             slot={selectedSlot}
@@ -149,6 +155,7 @@ export default function BookingFlow({ initialCars }: Props) {
         </div>
       )}
 
+      {/* Confirmation */}
       {step === 'confirmation' && confirmedBooking && selectedCar && selectedSlot && (
         <BookingConfirmation
           booking={confirmedBooking}
