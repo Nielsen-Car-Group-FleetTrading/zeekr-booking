@@ -1,14 +1,8 @@
 import { Resend } from 'resend';
 import { formatInTimeZone } from 'date-fns-tz';
-import { da } from 'date-fns/locale';
 import type { Car, Booking } from '@/types';
 import { config } from './config';
-
-function formatDanishDate(isoString: string): string {
-  return formatInTimeZone(new Date(isoString), config.timezone, "EEEE 'd.' d. MMMM yyyy", {
-    locale: da,
-  });
-}
+import { formatBookingDate } from './formatDate';
 
 function formatTime(isoString: string): string {
   return formatInTimeZone(new Date(isoString), config.timezone, 'HH:mm');
@@ -17,7 +11,7 @@ function formatTime(isoString: string): string {
 function buildEmailHtml(booking: Booking, car: Car): string {
   const bnLogoUrl = `${config.appUrl}/bjarne-nielsen-logo.png`;
   const zeekrLogoUrl = `${config.appUrl}/zeekr-logo.jpg`;
-  const dateStr = formatDanishDate(booking.start);
+  const dateStr = formatBookingDate(booking.start);
   const startTime = formatTime(booking.start);
   const endTime = formatTime(booking.slut);
 
@@ -125,7 +119,7 @@ function buildEmailHtml(booking: Booking, car: Car): string {
 
 export async function sendBookingConfirmation(booking: Booking, car: Car): Promise<void> {
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const dateStr = formatDanishDate(booking.start);
+  const dateStr = formatBookingDate(booking.start);
   const startTime = formatTime(booking.start);
 
   await resend.emails.send({

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { Car, TimeSlot, Booking } from '@/types';
+import { formatBookingDate } from '@/lib/formatDate';
 import DatePicker from './DatePicker';
 import DayOverview from './DayOverview';
 import BookingForm from './BookingForm';
@@ -128,12 +129,8 @@ export default function BookingFlow({ initialCars }: Props) {
       {step === 'overview' && selectedDate && (
         <div>
           <BackButton onClick={() => setStep('date')} />
-          <div className="text-sm text-neutral-500 capitalize mb-5">
-            {new Date(selectedDate + 'T12:00:00').toLocaleDateString('da-DK', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
+          <div className="text-sm text-neutral-500 mb-5">
+            {formatBookingDate(selectedDate + 'T12:00:00')}
           </div>
           <DayOverview
             cars={carsForDate}

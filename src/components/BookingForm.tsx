@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import type { Car, TimeSlot, Booking } from '@/types';
+import { formatBookingDate } from '@/lib/formatDate';
 
 interface Props {
   car: Car;
@@ -16,9 +17,7 @@ export default function BookingForm({ car, slot, onConfirmed }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const slotDate = new Date(slot.start).toLocaleDateString('da-DK', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
+  const slotDate = formatBookingDate(slot.start);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

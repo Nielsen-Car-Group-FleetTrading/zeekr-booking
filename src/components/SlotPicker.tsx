@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Car, TimeSlot } from '@/types';
+import { formatBookingDate } from '@/lib/formatDate';
 
 interface Props {
   car: Car;
@@ -38,11 +39,7 @@ export default function SlotPicker({ car, date, onSelect }: Props) {
 
   const availableCount = slots.filter((s) => s.available).length;
 
-  const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('da-DK', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const dateLabel = formatBookingDate(date + 'T12:00:00');
 
   return (
     <div>

@@ -1,6 +1,7 @@
 'use client';
 
 import type { Booking, Car, TimeSlot } from '@/types';
+import { formatBookingDate } from '@/lib/formatDate';
 
 interface Props {
   booking: Booking;
@@ -10,9 +11,7 @@ interface Props {
 }
 
 export default function BookingConfirmation({ booking, car, slot, onReset }: Props) {
-  const slotDate = new Date(slot.start).toLocaleDateString('da-DK', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
+  const slotDate = formatBookingDate(slot.start);
 
   return (
     <div className="text-center py-4">
