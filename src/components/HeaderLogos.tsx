@@ -5,8 +5,8 @@ interface Props {
   size?: 'default' | 'sm';
 }
 
-const BN_LOGO = '/BN_en_del_af_NCG_Logo_2F_POS-removebg-preview.png';
-const ZEEKR_LOGO = '/Zeekr-logo.jpg';
+const BN_LOGO = '/bjarne-nielsen-logo.png';
+const ZEEKR_LOGO = '/zeekr-logo.jpg';
 
 export default function HeaderLogos({ size = 'default' }: Props) {
   const bnH = size === 'sm' ? 28 : 32;
