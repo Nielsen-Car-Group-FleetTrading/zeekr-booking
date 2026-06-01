@@ -110,3 +110,32 @@ export async function getBookingById(id: string): Promise<Booking | null> {
     return null;
   }
 }
+
+export async function getAllBookings(): Promise<Booking[]> {
+  const [records, cars] = await Promise.all([
+    getBase()(BOOKINGER())
+      .select({ sort: [{ field: 'Start', direction: 'asc' }] })
+      .all(),
+    getCars(false),
+  ]);
+
+  const carMap = new Map(cars.map((c) => [c.id, c]));
+
+  return records.map((r) => {
+    const booking = mapBooking(r);
+    const car = carMap.get(booking.bilId);
+    return {
+      ...booking,
+      bilNavn: car?.navn,
+      bilRegNr: car?.regNr,
+    };
+  });
+}
+
+export async function updateBookingStatus(
+  id: string,
+  status: 'Bekræftet' | 'Annulleret'
+): Promise<Booking> {
+  const record = await getBase()(BOOKINGER()).update(id, { Status: status });
+  return mapBooking(record);
+}
