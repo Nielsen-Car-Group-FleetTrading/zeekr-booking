@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-neutral-50">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
-          <Image src="/zeekr-logo.svg" alt="Zeekr" width={80} height={24} className="mx-auto mb-6" />
+          <Image src="/zeekr-logo.svg" alt="Zeekr" width={120} height={30} className="mx-auto mb-6" unoptimized />
           <h1 className="text-xl font-bold tracking-tight">Admin</h1>
           <p className="text-sm text-neutral-500 mt-1">Indtast adgangskode for at fortsætte</p>
         </div>

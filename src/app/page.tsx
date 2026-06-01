@@ -18,7 +18,7 @@ export default async function Home() {
       {/* Header */}
       <header className="border-b border-neutral-200 px-6 py-4">
         <div className="max-w-2xl mx-auto">
-          <Image src="/zeekr-logo.svg" alt="Zeekr" width={80} height={24} priority />
+          <Image src="/zeekr-logo.svg" alt="Zeekr" width={120} height={30} priority unoptimized />
         </div>
       </header>
 
